@@ -22,6 +22,30 @@ from django.utils.http import urlsafe_base64_decode
 
 
 
+# Email verification message
+def EmailVerification(request,user):
+    try:
+        # Creating Verification Email
+        print(user)
+        user             = CustomUser.objects.get(email=user['email'].lower())
+        
+        token_generator  = EmailVerificationTokenGenerator()
+        token            = token_generator.make_token(user)
+        uidb64           = urlsafe_base64_encode(force_bytes(user.pk))
+        current_site     = get_current_site(request)
+        verification_url = f"https://{current_site.domain}/core/activate/{uidb64}/{token}/"
+        
+        # Sending the email 
+        subject         = 'Email verification'
+        message         = f'Hi {user.name}\nPlease Verify Your Email\n{verification_url}'
+        email_from      = settings.EMAIL_HOST_USER
+        recipient_list  = [user.email.lower(),]
+        send_mail(subject, message,email_from,recipient_list)
+        return "Email has been sent successfully"
+    except Exception as e:
+        return str(e)
+    
+
 
 #Register API
 @api_view(['POST'])
