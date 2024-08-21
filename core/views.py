@@ -91,3 +91,42 @@ def register(request):
 
 
 #Login API
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@csrf_exempt
+def Login(request):
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email'].lower()
+        password = serializer.validated_data['password']
+        
+        user = authenticate(request, email=email, password=password)
+        
+        if user is not None and user.is_active:
+            parent = CustomUser.objects.get(email=email.lower())
+            parent_id = parent.id            
+            try:
+                refresh = RefreshToken.for_user(user)
+
+                # Customize the payload with user information
+                refresh['email'] = email.lower()
+                refresh['role']  = "parent"       # Add other necessary user information to the payload
+                refresh['iss']   = 'OYaghi'
+                refresh['id']    = parent_id
+                
+                
+                token = {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+                return Response({"Message":"parent Login Successfuly","Token":token}, status=status.HTTP_200_OK)
+            except CustomUser.DoesNotExist:
+                return Response({"Message": "Error at generating token"}, status= status.HTTP_400_BAD_REQUEST)
+        else:
+            # User authentication failed or not a parent
+            return Response({"Message": "Invalid email or password"}, status=status.HTTP_404_NOT_FOUND)
+    else:
+        return Response({"Message": "Enter correct email and password"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
