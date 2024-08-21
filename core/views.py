@@ -47,6 +47,24 @@ def EmailVerification(request,user):
     
 
 
+# Email Activation
+def activate_Email(request, uidb64, token):  
+    
+    User = get_user_model()  
+    try:  
+        uid = force_str(urlsafe_base64_decode(uidb64))  
+        user = CustomUser.objects.get(pk=uid)  
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):  
+        user = None  
+    if user is not None and EmailVerificationTokenGenerator().check_token(user, token):  
+        user.is_active = True  
+        user.save()  
+        return HttpResponse('Thank you for your email confirmation. Now you can login your account.')  
+    else:  
+        return HttpResponse('Activation link is invalid!') 
+
+
+
 #Register API
 @api_view(['POST'])
 @permission_classes([AllowAny]) 
