@@ -7,7 +7,7 @@ class CustomUser(AbstractUser):
     username = None 
     email = models.EmailField(_("email"), unique=True, db_index=True)
     name = models.CharField(_("name"), max_length=255)
-    phone = models.CharField(_("phone"), max_length=10)
+    phone = models.CharField(_("phone"),unique=True, max_length=10)
     age = models.CharField(_("age"), max_length=3)
     gender = models.CharField(_("gender"), max_length=20)
     occupation = models.CharField(_("occupation"), max_length=150)
@@ -38,8 +38,6 @@ class BehaviorChallenges(models.Model):
 
 class StandardTestScore(models.Model):
     name = models.CharField(_("name"), max_length=255)
-    score = models.IntegerField(_("score"))
-
     def __str__(self):
         return f"{self.name}: {self.score}"
 
@@ -53,12 +51,23 @@ class Child(models.Model):
     grade = models.CharField(_("grade"), max_length=10)
     hobbies = models.ManyToManyField(Hobbies, related_name="children")
     behavior_challenges = models.ManyToManyField(BehaviorChallenges, related_name="children")
-    standard_test_score = models.ManyToManyField(StandardTestScore, related_name="children")
+    standard_test_score = models.ManyToManyField(StandardTestScore, through='TestScoreThroughModel', related_name="children")
     adding_date = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=False, verbose_name='active')
 
     def __str__(self):
         return self.name
+
+
+
+
+class TestScoreThroughModel(models.Model):
+    child = models.ForeignKey(Child, on_delete=models.CASCADE)
+    standard_test_score = models.ForeignKey(StandardTestScore, on_delete=models.CASCADE)
+    score = models.IntegerField(_("score"))
+
+    class Meta:
+        unique_together = ('child', 'standard_test_score')
 
 class EmailVerificationToken(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

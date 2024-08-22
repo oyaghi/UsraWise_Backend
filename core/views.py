@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import  IsAuthenticated, AllowAny
 from rest_framework import status
-from .serializer import CustomUserSerializer, LoginSerializer
+from .serializer import CustomUserSerializer, LoginSerializer, ChildSerializer
 from .models import CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -129,4 +129,12 @@ def Login(request):
         return Response({"Message": "Enter correct email and password"}, status=status.HTTP_400_BAD_REQUEST)
         
 
-
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def child_register(request):
+    if request.method == 'POST':
+        serializer = ChildSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

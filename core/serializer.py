@@ -71,58 +71,51 @@ class LoginSerializer(serializers.ModelSerializer):
         
         
 
+class HobbiesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hobbies
+        fields = ['id', 'name']
 
+class BehaviorChallengesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BehaviorChallenges
+        fields = ['id', 'name']
 
-# class SeekerSerializer(serializers.ModelSerializer):
+class StandardTestScoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StandardTestScore
+        fields = ['id', 'name', 'score']
 
-#     email = serializers.EmailField(write_only=True)   # Write only for fields that shouldn't be represented and just wants to used for update or create 
-#     first_name = serializers.CharField(write_only=True)  # We have used write_only = True on all the fields that are being inheirted since we sys can't find them in the Provider model, and we want to tell him that we just want to use them for create or update 
-#     last_name = serializers.CharField(write_only=True)
-#     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
-#     ed_level = serializers.CharField()  # Added for Provider's work_email field
+class ChildSerializer(serializers.ModelSerializer):
+    hobbies = serializers.PrimaryKeyRelatedField(queryset=Hobbies.objects.all(), many=True)
+    behavior_challenges = serializers.PrimaryKeyRelatedField(queryset=BehaviorChallenges.objects.all(), many=True)
+    standard_test_score = StandardTestScoreSerializer(many=True)
+
+    class Meta:
+        model = Child
+        fields = [
+            'id', 'parent', 'name', 'age', 'gender', 'learning_style', 
+            'gpa', 'grade', 'hobbies', 'behavior_challenges', 
+            'standard_test_score', 'adding_date', 'is_active'
+        ]
+        read_only_fields = ['adding_date']
+
+    def create(self, validated_data):
+        hobbies_data = validated_data.pop('hobbies')
+        behavior_challenges_data = validated_data.pop('behavior_challenges')
+        standard_test_scores_data = validated_data.pop('standard_test_score')
         
-
-#     class Meta:
-#         model = Seeker
+        # Create the Child instance
+        child = Child.objects.create(**validated_data)
         
-#         fields = [
-#             'email',
-#             'first_name',
-#             'last_name',
-#             'ed_level',
-#             'password',
-            
-            
-#         ]
+        # Add the ManyToMany relationships
+        child.hobbies.set(hobbies_data)
+        child.behavior_challenges.set(behavior_challenges_data)
         
-    
-#     def create(self, validated_data):
-#         user_data = {
-#             'email': validated_data['email'].lower(),
-#             'first_name': validated_data['first_name'],
-#             'last_name': validated_data['last_name'],
-#             'password': validated_data['password'],
-#             'is_seeker':True
-#         }
-#         with transaction.atomic():
-#             try:
-    
-#                 user = CustomUser.objects.create_user(**user_data)
-                
-#                 seeker = Seeker.objects.create(
-#                     user=user,
-#                     ed_level=validated_data['ed_level']
-#                 )
-#                 serializer = SeekerSerializer(seeker) # when you try to serialize the object for the response, it is still in an unsaved state and therefore cannot be converted to JSON correctly.
-#                 data = serializer.data
-#                 group = Group.objects.get(name='Seeker')
-
-#                     # Add the user to the group
-#                 group.user_set.add(user)
-
-#                 return user_data
-#             except IntegrityError as e:
-#                 return ({"Error Message": str(e)})
+        # Handle the StandardTestScore with subject and score
+        for score_data in standard_test_scores_data:
+            subject = StandardTestScore.objects.get(id=score_data['id'])
+            child.standard_test_score.add(subject, through_defaults={'score': score_data['score']})
         
-        
+        return child
 

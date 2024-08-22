@@ -41,11 +41,13 @@ INSTALLED_APPS = [
     'core',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
 ]
 
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -82,7 +84,7 @@ WSGI_APPLICATION = 'project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'UsraWise',        # Database name
+        'NAME': 'UsraWise2',        # Database name
         'USER': 'postgres',  # Database username
         'PASSWORD': 'A@05669811210a@',  # Database password
         'HOST': 'localhost',      # Database host (e.g., 'localhost' or IP)
@@ -166,3 +168,11 @@ EMAIL_FROM = "Batatasuper3214@gmail.com"
 
 
 SITE_ID = 2
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+# settings.py
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://7b13-176-29-148-34.ngrok-free.app',
+]
