@@ -102,31 +102,25 @@ class ChildSerializer(serializers.ModelSerializer):
             'gpa': validated_data['gpa'],
             'grade': validated_data['grade'],
         }
-        print(50*"+")
+        
         # Create the Child instance
         child = Child.objects.create(**child_data)
-        print(50*"+")
         # Handle many-to-many relationships for hobbies and behavior challenges
         if 'hobbies' in validated_data:
             child.hobbies.set(validated_data['hobbies'])
-        print(50*"+")
         if 'behavior_challenges' in validated_data:
             child.behavior_challenges.set(validated_data['behavior_challenges'])
-        print(50*"+")
         # Handle the many-to-many relationship for standard_test_score using the through model
         print(validated_data)
         if 'testscorethroughmodel_set' in validated_data:
             for test_score_data in validated_data['testscorethroughmodel_set']:
                 standard_test_score_id = test_score_data['id'].id
                 score = test_score_data['score']
-                
-                print(f"Creating TestScoreThroughModel with child: {child.id}, standard_test_score_id: {standard_test_score_id}, score: {score}")
-                
+                                
                 # Create the TestScoreThroughModel instance
                 TestScoreThroughModel.objects.create(
                     child=child,
                     standard_test_score_id=standard_test_score_id,
                     score=score
                 )
-        print(50*"End")
         return child
