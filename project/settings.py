@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-ffzk#f$r)w1qh8kx8l4v^7_ig&u6(emn*$*0jjcswb7b0&&v^m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['7b13-176-29-148-34.ngrok-free.app']
+ALLOWED_HOSTS = ['9dae-176-29-148-34.ngrok-free.app']
 
 
 # Application definition
@@ -152,7 +152,7 @@ SIMPLE_JWT = {
 
 
 CORS_ALLOWED_ORIGINS = [
-    "https://7b13-176-29-148-34.ngrok-free.app",
+    "https://9dae-176-29-148-34.ngrok-free.app",
     # Add your front-end domain here
     # Other allowed origins if needed
 ]
@@ -174,5 +174,5 @@ CORS_ALLOW_ALL_ORIGINS = True
 # settings.py
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://7b13-176-29-148-34.ngrok-free.app',
+    'https://9dae-176-29-148-34.ngrok-free.app',
 ]

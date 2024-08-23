@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import  CustomUser, Child, Hobbies, BehaviorChallenges, StandardTestScore
+from .models import  CustomUser, Child, Hobbies, BehaviorChallenges, StandardTestScore, TestScoreThroughModel
 from django.db import transaction,IntegrityError
 
 
@@ -71,51 +71,62 @@ class LoginSerializer(serializers.ModelSerializer):
         
         
 
-class HobbiesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Hobbies
-        fields = ['id', 'name']
+class TestScoreThroughModelSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(queryset=StandardTestScore.objects.all())
+    score = serializers.IntegerField()
 
-class BehaviorChallengesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = BehaviorChallenges
-        fields = ['id', 'name']
+        model = TestScoreThroughModel
+        fields = ['id', 'score']
 
-class StandardTestScoreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = StandardTestScore
-        fields = ['id', 'name', 'score']
 
 class ChildSerializer(serializers.ModelSerializer):
-    hobbies = serializers.PrimaryKeyRelatedField(queryset=Hobbies.objects.all(), many=True)
-    behavior_challenges = serializers.PrimaryKeyRelatedField(queryset=BehaviorChallenges.objects.all(), many=True)
-    standard_test_score = StandardTestScoreSerializer(many=True)
+    hobbies = serializers.PrimaryKeyRelatedField(many=True, queryset=Hobbies.objects.all())
+    behavior_challenges = serializers.PrimaryKeyRelatedField(many=True, queryset=BehaviorChallenges.objects.all())
+    standard_test_score = TestScoreThroughModelSerializer(many=True, source='testscorethroughmodel_set')
 
     class Meta:
         model = Child
         fields = [
-            'id', 'parent', 'name', 'age', 'gender', 'learning_style', 
-            'gpa', 'grade', 'hobbies', 'behavior_challenges', 
-            'standard_test_score', 'adding_date', 'is_active'
+            'parent', 'name', 'age', 'gender', 'learning_style', 'gpa', 'grade', 
+            'hobbies', 'behavior_challenges', 'standard_test_score'
         ]
-        read_only_fields = ['adding_date']
 
     def create(self, validated_data):
-        hobbies_data = validated_data.pop('hobbies')
-        behavior_challenges_data = validated_data.pop('behavior_challenges')
-        standard_test_scores_data = validated_data.pop('standard_test_score')
-        
+        child_data = {
+            'parent': validated_data['parent'],
+            'name': validated_data['name'],
+            'age': validated_data['age'],
+            'gender': validated_data['gender'],
+            'learning_style': validated_data['learning_style'],
+            'gpa': validated_data['gpa'],
+            'grade': validated_data['grade'],
+        }
+        print(50*"+")
         # Create the Child instance
-        child = Child.objects.create(**validated_data)
-        
-        # Add the ManyToMany relationships
-        child.hobbies.set(hobbies_data)
-        child.behavior_challenges.set(behavior_challenges_data)
-        
-        # Handle the StandardTestScore with subject and score
-        for score_data in standard_test_scores_data:
-            subject = StandardTestScore.objects.get(id=score_data['id'])
-            child.standard_test_score.add(subject, through_defaults={'score': score_data['score']})
-        
+        child = Child.objects.create(**child_data)
+        print(50*"+")
+        # Handle many-to-many relationships for hobbies and behavior challenges
+        if 'hobbies' in validated_data:
+            child.hobbies.set(validated_data['hobbies'])
+        print(50*"+")
+        if 'behavior_challenges' in validated_data:
+            child.behavior_challenges.set(validated_data['behavior_challenges'])
+        print(50*"+")
+        # Handle the many-to-many relationship for standard_test_score using the through model
+        print(validated_data)
+        if 'testscorethroughmodel_set' in validated_data:
+            for test_score_data in validated_data['testscorethroughmodel_set']:
+                standard_test_score_id = test_score_data['id'].id
+                score = test_score_data['score']
+                
+                print(f"Creating TestScoreThroughModel with child: {child.id}, standard_test_score_id: {standard_test_score_id}, score: {score}")
+                
+                # Create the TestScoreThroughModel instance
+                TestScoreThroughModel.objects.create(
+                    child=child,
+                    standard_test_score_id=standard_test_score_id,
+                    score=score
+                )
+        print(50*"End")
         return child
-

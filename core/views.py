@@ -126,15 +126,15 @@ def Login(request):
             # User authentication failed or not a parent
             return Response({"Message": "Invalid email or password"}, status=status.HTTP_404_NOT_FOUND)
     else:
-        return Response({"Message": "Enter correct email and password"}, status=status.HTTP_400_BAD_REQUEST)
-        
+        return Response({"Message": "Enter correct email and password"}, status=status.HTTP_400_BAD_REQUEST)       
+
+
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def child_register(request):
-    if request.method == 'POST':
-        serializer = ChildSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer = ChildSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
