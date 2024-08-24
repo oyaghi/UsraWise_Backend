@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import  IsAuthenticated, AllowAny
 from rest_framework import status
-from .serializer import CustomUserSerializer, LoginSerializer, ChildSerializer
+from .serializer import CustomUserSerializer, LoginSerializer, ChildSerializer,GetParentSerializer, ChildChildSerializer
 from .models import CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -211,3 +211,48 @@ def update_child(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     return Response(token_id, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+@csrf_exempt
+def get_child(request):
+    try:
+        child_id = request.data['child_id']
+        child = Child.objects.get(pk=child_id)
+        serializer = ChildChildSerializer(child)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Child.DoesNotExist:
+        return Response({"error": "Child not found"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def get_parent(request):
+    try:
+        token_id= get_token_id(request)
+        parent_id = token_id['user_id']
+        parent = CustomUser.objects.get(pk=parent_id)
+        serializer = GetParentSerializer(parent)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except CustomUser.DoesNotExist:
+        return Response({"error": "Parent not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_children(request):
+    try:
+        # Get the authenticated parent (user)
+        token_id = get_token_id(request)
+        parent= token_id['user_id']
+        # Get all children associated with this parent
+        children = Child.objects.filter(parent=parent)
+        # Serialize the children data
+        serializer = ChildSerializer(children, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -168,3 +168,116 @@ class ChildSerializer(serializers.ModelSerializer):
                 )
 
         return instance
+
+
+
+
+class GetParentSerializer(serializers.ModelSerializer):
+    
+    email = serializers.EmailField()
+    name = serializers.CharField()
+    phone = serializers.CharField()
+    age = serializers.CharField()
+    gender = serializers.CharField()
+    occupation = serializers.CharField()
+    education_level = serializers.CharField()
+    number_of_children = serializers.IntegerField()
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})  # Keep this write-only
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'email',
+            'name',
+            'phone',
+            'age',
+            'gender',
+            'occupation',
+            'education_level',
+            'number_of_children',
+            'password',
+        ]
+
+# class GetChildserializer(serializers.ModelSerializer):
+    
+#     hobbies = serializers.PrimaryKeyRelatedField(many=True, queryset=Hobbies.objects.all())
+#     behavior_challenges = serializers.PrimaryKeyRelatedField(many=True, queryset=BehaviorChallenges.objects.all())
+#     standard_test_score = TestScoreThroughModelSerializer(many=True, source='testscorethroughmodel_set')
+
+#     class Meta:
+#         model = Child
+#         fields = [
+#             'parent', 'name', 'age', 'gender', 'learning_style', 'gpa', 'grade', 
+#             'hobbies', 'behavior_challenges', 'standard_test_score'
+#         ]
+
+
+
+
+#Child retrival +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+class ChildTestScoreThroughModelSerializer(serializers.ModelSerializer):
+    standard_test_score_id = serializers.IntegerField(source='standard_test_score.id')
+    standard_test_score_name = serializers.CharField(source='standard_test_score.name')
+
+    class Meta:
+        model = TestScoreThroughModel
+        fields = ['standard_test_score_id', 'standard_test_score_name', 'score']
+
+class ChildHobbiesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hobbies
+        fields = ['id', 'name']
+
+
+class ChildBehaviorChallengesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BehaviorChallenges
+        fields = ['id', 'name']
+
+
+class ChildChildSerializer(serializers.ModelSerializer):
+    standard_test_score = ChildTestScoreThroughModelSerializer(many=True, source='testscorethroughmodel_set')
+    hobbies = ChildHobbiesSerializer(many=True)
+    behavior_challenges = ChildBehaviorChallengesSerializer(many=True)
+
+    class Meta:
+        model = Child
+        fields = [
+            'parent',
+            'name',
+            'age',
+            'gender',
+            'learning_style',
+            'gpa',
+            'grade',
+            'hobbies',
+            'behavior_challenges',
+            'standard_test_score'
+        ]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['standard_test_score'] = [
+            {
+                'id': test_score['standard_test_score_id'],
+                'name': test_score['standard_test_score_name'],
+                'score': test_score['score']
+            }
+            for test_score in representation['standard_test_score']
+        ]
+        # Format the hobbies field to include both id and name
+        representation['hobbies'] = [
+            {'id': hobby['id'], 'name': hobby['name']}
+            for hobby in representation['hobbies']
+        ]
+        
+        # Format the behavior_challenges field to include both id and name
+        representation['behavior_challenges'] = [
+            {'id': challenge['id'], 'name': challenge['name']}
+            for challenge in representation['behavior_challenges']
+        ]
+
+        return representation
