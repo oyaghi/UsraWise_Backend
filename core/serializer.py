@@ -136,3 +136,38 @@ class ChildSerializer(serializers.ModelSerializer):
                     score=score
                 )
         return child
+    def update(self, instance, validated_data):
+    # Update basic child data directly on the instance
+        instance.name = validated_data.get('name', instance.name)
+        instance.age = validated_data.get('age', instance.age)
+        instance.gender = validated_data.get('gender', instance.gender)
+        instance.learning_style = validated_data.get('learning_style', instance.learning_style)
+        instance.gpa = validated_data.get('gpa', instance.gpa)
+        instance.grade = validated_data.get('grade', instance.grade)
+
+        # Save the updated instance
+        instance.save()
+
+        # Update many-to-many relationships
+        if 'hobbies' in validated_data:
+            instance.hobbies.set(validated_data['hobbies'])
+        if 'behavior_challenges' in validated_data:
+            instance.behavior_challenges.set(validated_data['behavior_challenges'])
+
+        # Handle the many-to-many relationship for standard_test_score using the through model
+        if 'testscorethroughmodel_set' in validated_data:
+            # Clear existing TestScoreThroughModel instances
+            instance.testscorethroughmodel_set.all().delete()
+
+            for test_score_data in validated_data['testscorethroughmodel_set']:
+                standard_test_score = test_score_data['id']
+                score = test_score_data['score']
+
+                # Create new TestScoreThroughModel instances
+                TestScoreThroughModel.objects.create(
+                    child=instance,
+                    standard_test_score=standard_test_score,
+                    score=score
+                )
+
+        return instance

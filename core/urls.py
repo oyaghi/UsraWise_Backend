@@ -8,5 +8,7 @@ urlpatterns = [
     path('activate/<str:uidb64>/<str:token>/', views.activate_Email, name='activate'),
     path('user/child_register/', views.child_register),
     path('user/update/parent/', views.update_parent),
+    path('user/update/child/', views.update_child),
+
     
 ]

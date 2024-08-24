@@ -183,3 +183,20 @@ def update_parent(request):
         return Response({"Message":"Information Updated Successfuly"}, status=status.HTTP_200_OK)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def update_child(request):
+    token_id = get_token_id(request)
+    if  'user_id' in token_id :
+        request.data["parent"] = token_id['user_id']
+        serializer = ChildSerializer(data=request.data, partial=True)  # Use the serializer, not the model
+        
+        if serializer.is_valid():
+            serializer.save()  # Calls the `update` method in the serializer
+            return Response({"Message":"Information Updated Successfuly"}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(token_id, status=status.HTTP_400_BAD_REQUEST)
