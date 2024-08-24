@@ -153,20 +153,17 @@ class ChildSerializer(serializers.ModelSerializer):
             instance.hobbies.set(validated_data['hobbies'])
         if 'behavior_challenges' in validated_data:
             instance.behavior_challenges.set(validated_data['behavior_challenges'])
-
         # Handle the many-to-many relationship for standard_test_score using the through model
+        print(validated_data)
         if 'testscorethroughmodel_set' in validated_data:
-            # Clear existing TestScoreThroughModel instances
-            instance.testscorethroughmodel_set.all().delete()
-
             for test_score_data in validated_data['testscorethroughmodel_set']:
-                standard_test_score = test_score_data['id']
+                standard_test_score_id = test_score_data['id'].id
                 score = test_score_data['score']
-
-                # Create new TestScoreThroughModel instances
+                                
+                # Create the TestScoreThroughModel instance
                 TestScoreThroughModel.objects.create(
                     child=instance,
-                    standard_test_score=standard_test_score,
+                    standard_test_score_id=standard_test_score_id,
                     score=score
                 )
 
