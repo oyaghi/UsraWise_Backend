@@ -7,6 +7,8 @@ from .serializer import CustomUserSerializer, LoginSerializer, ChildSerializer
 from .models import CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 
 from django.core.mail import send_mail
@@ -21,6 +23,27 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 
 
+
+
+def get_token_id(request):
+    auth_header = request.headers.get('Authorization')
+    
+    if auth_header is None or not auth_header.startswith('Bearer '):
+        return Response({"error": "Authorization header missing or incorrect format"}, status=400)
+    
+    token = auth_header.split(' ')[1]  # Get the token part from the header
+
+    try:
+        # Decode the token
+        decoded_token = UntypedToken(token)
+        
+        # Extract the user ID from the token
+        user_id = decoded_token.get('user_id')
+        
+        return {"user_id": user_id}
+    
+    except (InvalidToken, TokenError) as e:
+        return {"error": str(e)}
 
 # Email verification message
 def EmailVerification(request,user):
@@ -86,7 +109,7 @@ def register(request):
                     return Response({"Message":message}, status=status.HTTP_200_OK)
 
             else:
-                return Response({"Message": "Error in validating data"}, status= status.HTTP_400_BAD_REQUEST)
+                return Response({"Message": seri.errors}, status= status.HTTP_400_BAD_REQUEST)
         
 
 
@@ -131,10 +154,32 @@ def Login(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
 def child_register(request):
-    serializer = ChildSerializer(data=request.data)
+    token_id= get_token_id(request)
+    if  'user_id' in token_id :
+        request.data['parent'] = token_id['user_id']
+        serializer = ChildSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(token_id, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def update_parent(request):
+    parent = request.user  # Get the currently authenticated user
+    serializer = CustomUserSerializer(instance=parent, data=request.data, partial=True)  # Use the serializer, not the model
+    
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer.save()  # Calls the `update` method in the serializer
+        return Response({"Message":"Information Updated Successfuly"}, status=status.HTTP_200_OK)
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

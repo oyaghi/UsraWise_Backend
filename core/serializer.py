@@ -58,6 +58,18 @@ class CustomUserSerializer(serializers.ModelSerializer):
                 
             except IntegrityError as e:
                 raise serializers.ValidationError({"error": str(e)})
+    def update(self, instance, validated_data):
+        # If password is being updated, handle it separately
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        
+        # Update the rest of the fields
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        
+        instance.save()
+        return instance
 
 
         
