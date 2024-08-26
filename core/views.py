@@ -4,12 +4,15 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import  IsAuthenticated, AllowAny
 from rest_framework import status
 from .serializer import CustomUserSerializer, LoginSerializer, ChildSerializer,GetParentSerializer, ChildChildSerializer
-from .models import CustomUser
+from .models import CustomUser, Hobbies, StandardTestScore, TestScoreThroughModel, BehaviorChallenges
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import UntypedToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
+import os 
+import json
+from django.http import JsonResponse
+from django.conf import settings
 
 from django.core.mail import send_mail
 from django.conf import settings
@@ -252,7 +255,72 @@ def get_all_children(request):
         # Get all children associated with this parent
         children = Child.objects.filter(parent=parent)
         # Serialize the children data
-        serializer = ChildSerializer(children, many=True)
+        serializer = ChildChildSerializer(children, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    
+from core.UsraWise.usra import generation_chain
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def nova(request):
+    
+            
+            # Load the response JSON file
+            with open(r'C:\Users\OYaghi\Desktop\UsraWise_backend\myvenv\Scripts\project\core\UsraWise\response.json', 'r') as file:
+                RESPONSE_JSON = json.load(file)
+            # Call the generation_chain function
+            token_id    = get_token_id(request)
+            parent_id   = token_id['user_id']
+            child_id    = request.data['child_id']
+            parent      = CustomUser.objects.get(id=parent_id)
+            child       = Child.objects.get(id=child_id)
+            
+            hobbies = child.hobbies.all()
+            hobbies_string = ""
+            for hobby in hobbies:
+                hobbies_string+=hobby.name + ", "
+                
+            behavior_challenge = child.behavior_challenges.all()
+            behavior_challenge_string = ""
+            for challenge in behavior_challenge:
+                behavior_challenge_string+= challenge.name + ", "
+            
+            tstm = TestScoreThroughModel.objects.filter(child=child)
+            standard_test_score_dict = {}
+            for stc in tstm:
+                standard_test_score_dict[stc.standard_test_score.name]= stc.score 
+            
+            
+            
+            
+            
+            response    = generation_chain({
+                "age": child.age,
+                "grade_level": child.grade,
+                "gender": child.gender,
+                "learning_style": child.learning_style,
+                "hobbies": hobbies_string,
+                "education_level": parent.education_level,
+                "occupation": parent.occupation,
+                "parenting_style": parent.parenting_style,
+                "overall_performance_level": child.gpa,
+                "standardized_test_scores": standard_test_score_dict,
+                "behavioral_challenges": behavior_challenge_string,
+                "response_json": json.dumps(RESPONSE_JSON),
+            })
+
+            # Parse the output
+            output = json.loads(response['response'])
+
+            # Save the JSON data to an external file within the app directory
+            output_path =r'C:\Users\OYaghi\Desktop\UsraWise_backend\myvenv\Scripts\project\core\UsraWise\output.json'
+            with open(output_path, 'w') as file:
+                json.dump(output, file, indent=4)
+
+            return JsonResponse({'Output': output}, safe=False)
+
+    

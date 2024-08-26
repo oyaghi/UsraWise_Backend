@@ -19,6 +19,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     occupation = serializers.CharField(write_only=True)
     education_level = serializers.CharField(write_only=True)
     number_of_children = serializers.IntegerField(write_only=True)
+    parenting_style = serializers.CharField(write_only=True)
 
     class Meta:
         model = CustomUser
@@ -31,6 +32,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'occupation',
             'education_level',
             'number_of_children',
+            'parenting_style',
             'password',
         ]
         
@@ -44,7 +46,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'gender': validated_data['gender'],
             'occupation': validated_data['occupation'],
             'education_level': validated_data['education_level'],
-            'number_of_children': validated_data['number_of_children']
+            'number_of_children': validated_data['number_of_children'],
+            'parenting_style': validated_data['parenting_style']
         }
 
         with transaction.atomic():
@@ -182,6 +185,7 @@ class GetParentSerializer(serializers.ModelSerializer):
     occupation = serializers.CharField()
     education_level = serializers.CharField()
     number_of_children = serializers.IntegerField()
+    parenting_style= serializers.CharField()
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})  # Keep this write-only
 
     class Meta:
@@ -195,6 +199,7 @@ class GetParentSerializer(serializers.ModelSerializer):
             'occupation',
             'education_level',
             'number_of_children',
+            'parenting_style',
             'password',
         ]
 
@@ -281,3 +286,49 @@ class ChildChildSerializer(serializers.ModelSerializer):
         ]
 
         return representation
+    
+    
+    
+# AI data structure 
+"""
+{
+    "age": 9,
+    "grade_level": "4th",
+    "gender": "Female",
+    "learning_style": "Kinesthetic",
+    "hobbies": ["Playing Piano", "Swimming"],
+    "education_level": "High School Diploma",
+    "occupation": "Teacher",
+    "parenting_style": "Supportive",
+    "overall_performance_level": "Average",
+    "standardized_test_scores": {
+        "Math": "70th percentile",
+        "Reading": "65th percentile",
+        "Science": "72nd percentile"
+    },
+    "behavioral_challenges": "Struggles with organization, occasionally disruptive in class, needs encouragement to participate",
+    "response_json": json.dumps(RESPONSE_JSON)
+})
+    
+"""
+
+"""
+Parent:
+education_level 
+occupation
+parenting_style: ??????!
+
+"""
+
+
+"""
+Child:
+age
+grade_level
+learning_style 
+hobbies 
+gpa (overall_performance_level)
+standard_test_score (standardized_test_scores)
+behavioral_challenges 
+
+"""

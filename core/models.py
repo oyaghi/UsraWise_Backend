@@ -13,6 +13,7 @@ class CustomUser(AbstractUser):
     occupation = models.CharField(_("occupation"), max_length=150)
     education_level = models.CharField(_("education level"), max_length=100)
     number_of_children = models.IntegerField(_("number of children"))
+    parenting_style = models.CharField(_("parenting style"), max_length=150, default="Supportive")
     registration_date = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=False, verbose_name='active')
 

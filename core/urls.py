@@ -12,6 +12,7 @@ urlpatterns = [
     path('user/get/get_all_children/', views.get_all_children),
     path('user/get/parent/', views.get_parent),
     path('user/get/child/', views.get_child),
+    path('nova/', views.nova, name='nova'),
 
     
 ]
